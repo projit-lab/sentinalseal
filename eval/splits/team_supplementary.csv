@@ -1,0 +1,11 @@
+video_id,label,condition,device,split
+team_real_office_01.mp4,0,normal_lighting,pixel_7,supplementary
+team_real_office_02.mp4,0,normal_lighting,oneplus_11,supplementary
+team_real_dark_01.mp4,0,low_light,pixel_7,supplementary
+team_real_dark_02.mp4,0,low_light,oneplus_11,supplementary
+team_real_whatsapp_01.mp4,0,whatsapp_compression,pixel_7,supplementary
+team_swap_office_01.mp4,1,face_swap,pixel_7,supplementary
+team_swap_office_02.mp4,1,face_swap,oneplus_11,supplementary
+team_swap_dark_01.mp4,1,face_swap_low_light,pixel_7,supplementary
+team_swap_whatsapp_01.mp4,1,face_swap_whatsapp,pixel_7,supplementary
+team_swap_screen_01.mp4,1,screen_replay,pixel_7,supplementary
