@@ -2,8 +2,8 @@
 # CPU-only. All versions pinned for reproducibility.
 
 # --- Core ---
-opencv-python-headless==4.10.0.84
-numpy==1.26.4
+opencv-python>=4.10.0.84
+numpy>=1.26.4
 
 # --- Face detection ---
 facenet-pytorch==2.6.0
