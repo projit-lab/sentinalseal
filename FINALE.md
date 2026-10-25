@@ -30,3 +30,11 @@
 - `backend/tests/`: 20 tests (seal attacks, bad inputs, end-to-end)
 - `src/`: web screens (New payment, Payments to release, Fraud-ops, Accuracy)
 - `app/`: approver app scans the payment QR, shows payee and amount, seals the exact payment; phone enrolment
+
+## AI assistance (disclosure)
+
+As declared on the Pre-Event Disclosure Form: AI coding assistants (Anthropic Claude, Google Antigravity)
+were used to help write and review parts of this repository, including Part B (backend, web screens,
+approver-app changes) and Part A (detector, evaluation). All code was reviewed and run by the team,
+and every member can explain it. Pre-existing code (SentinelHard, IOB CyberNova 2026) is everything up to
+the `pre-finale` tag (49c0418).
