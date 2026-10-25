@@ -1,0 +1,6 @@
+path,label,fake_type,source
+data/team/prajit_genuine_01.mp4,0,real,team_consented
+data/team/natasha_genuine_01.mp4,0,real,team_consented
+data/deepspeak/real_0001.mp4,0,real,deepspeak_v1
+data/deepspeak/fake_faceswap_0001.mp4,1,face_swap,deepspeak_v1
+data/deepspeak/fake_lipsync_0001.mp4,1,lip_sync,deepspeak_v1

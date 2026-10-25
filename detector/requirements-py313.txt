@@ -1,0 +1,19 @@
+# Versions installed and run on the demo laptop: Windows 11, Python 3.13, CPU only.
+# The pins in requirements.txt (torch 2.4.1) have no Python 3.13 wheels.
+#
+#   pip install -r detector/requirements-py313.txt
+#   pip install facenet-pytorch==2.6.0 --no-deps   # its own pins would downgrade torch
+#
+opencv-python==5.0.0.93
+numpy==2.5.3
+pillow==12.3.0
+torch==2.14.1
+torchvision==0.29.1
+transformers==5.20.2
+huggingface-hub==2.3.0
+safetensors==0.8.0
+timm==1.0.30
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0
+tqdm==4.70.1

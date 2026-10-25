@@ -90,7 +90,8 @@ export default function Accuracy() {
       {m.measured && (
         <>
           <section className="card">
-            <h3>Main test set (DeepSpeak v1, never trained on)</h3>
+            <h3>Test set: {m.test_set || "not recorded"}</h3>
+            <p className="quiet small">{m.decision_rule} · models: {(m.models_used || []).join(", ")}</p>
             <Suite title="Main test set" s={S.accuracy_deepspeak} />
             {S.accuracy_deepspeak?.by_fake_type && (
               <table className="kv">
@@ -103,10 +104,12 @@ export default function Accuracy() {
               </table>
             )}
           </section>
-          <section className="card">
-            <h3>Cross-dataset (fit on DFDC, tested on DeepSpeak)</h3>
-            <Suite title="Cross-dataset" s={S.cross_dataset} />
-          </section>
+          {S.cross_dataset && (
+            <section className="card">
+              <h3>Cross-dataset</h3>
+              <Suite title="Cross-dataset" s={S.cross_dataset} />
+            </section>
+          )}
           <section className="card grid-2 plain">
             <div>
               <h3>What each part adds (ablation)</h3>
@@ -153,10 +156,10 @@ export default function Accuracy() {
       <section className="card">
         <h3>Reproduce these numbers</h3>
         <pre>{`git clone https://github.com/projit-lab/sentinalseal && cd sentinalseal
-pip install -r eval/requirements.txt
-python eval/get_data.py
-python eval/run_all.py --seed 42
-pytest backend/tests detector/tests`}</pre>
+pip install -r detector/requirements-py313.txt -r backend/requirements.txt
+python -m detector.check_models
+python eval/evaluate.py --labels eval/labels.csv --robustness --seed 42
+python -m pytest backend/tests detector/tests -q`}</pre>
       </section>
     </div>
   );

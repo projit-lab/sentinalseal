@@ -1,7 +1,7 @@
 """
 Measured accuracy, served to the Accuracy page.
 
-Only results produced by real runs are shown. eval/run_all.py must write
+Only results produced by real runs are shown. eval/evaluate.py writes
 "provenance": "measured" at the top of results/metrics.json once every number
 comes from running detector.analyze() on real files. Anything else is
 reported as not measured, so the app can never display invented numbers.
@@ -34,7 +34,7 @@ def _load(name: str):
 def metrics():
     data = _load("metrics.json")
     if data is None:
-        return {"measured": False, "reason": "results/metrics.json not found. Run eval/run_all.py."}
+        return {"measured": False, "reason": "results/metrics.json not found. Run eval/evaluate.py."}
     if data.get("provenance") != "measured":
         return {"measured": False,
                 "reason": "results/metrics.json is not marked as measured from real runs."}

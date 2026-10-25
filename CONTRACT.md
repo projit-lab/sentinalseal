@@ -144,6 +144,6 @@ result: dict = analyze("/path/to/video.mp4")
 ## Accuracy page rule (added by Part B)
 
 The backend serves `results/metrics.json` to the Accuracy page **only** if it has a top-level
-`"provenance": "measured"`. Write that field in `eval/run_all.py` only when every number came
+`"provenance": "measured"`. `eval/evaluate.py` writes that field; it is only valid when every number came
 from running `analyze()` on real files. Optional: `results/misses.json` as a list of
 `{"file", "true_label", "verdict", "score", "reason"}` for the failure-case table.

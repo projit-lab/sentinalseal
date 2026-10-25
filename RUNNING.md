@@ -40,4 +40,4 @@ python -m pytest detector/tests -q              # detector units
 ## Accuracy page
 
 Shows numbers only when `results/metrics.json` contains `"provenance": "measured"`,
-which `eval/run_all.py` must write only after running `detector.analyze()` on real test videos.
+which `eval/evaluate.py` writes after running `detector.analyze()` on real labelled videos.

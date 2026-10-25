@@ -17,7 +17,7 @@
 - `eval/requirements.txt`: pinned evaluation dependencies
 - `eval/splits/`: committed split manifests (`dfdc_fit.csv`, `deepspeak_test.csv`, `team_supplementary.csv`)
 - `eval/get_data.py`: dataset verifier and fixture generator
-- `eval/run_all.py`: benchmark suite runner (Suites 1–4, 9, 10) reproducing all metrics with `--seed 42`
+- `eval/run_all.py`: replaced on 25 Oct by `eval/evaluate.py` (it generated scores from random draws instead of running the detector; those numbers were removed)
 - `results/metrics.json`: contract-compliant benchmark results for React Accuracy view
 - `results/REPORT.md`: comprehensive evaluation report with ablation, robustness, latency, and limitation disclosures
 
