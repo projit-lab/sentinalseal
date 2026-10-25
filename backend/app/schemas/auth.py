@@ -23,6 +23,23 @@ class BiometricPayload(BaseModel):
     variance: Optional[float] = Field(default=2.5, description="Statistical variance of BPM over measurement window")
 
 
+class SealPayload(BaseModel):
+    """
+    What the approver's phone signs for SentinelSeal: the SentinelHard liveness
+    fields plus the exact payment being approved.
+    """
+    session_id: str
+    payment_id: str
+    approver_id: str
+    payee: str
+    amount_inr: float = Field(..., gt=0)
+    bpm: int = Field(..., ge=0)
+    timestamp: datetime
+    device_id: str
+    snr: Optional[float] = Field(default=5.0)
+    variance: Optional[float] = Field(default=2.5)
+
+
 class VerifyRequest(BaseModel):
     """
     The full verification request sent by the Pixel 7 to the backend.
@@ -38,9 +55,9 @@ class VerifyRequest(BaseModel):
         ...,
         description="Base64-encoded ECDSA-SHA256 signature over the payload bytes",
     )
-    public_key: str = Field(
-        ...,
-        description="Base64-encoded DER public key (SubjectPublicKeyInfo format)",
+    public_key: Optional[str] = Field(
+        default=None,
+        description="Ignored by the server: the signature is checked only against the enrolled key",
     )
     attestation_chain: Optional[list[str]] = Field(
         default=None,
@@ -59,3 +76,5 @@ class VerifyResponse(BaseModel):
         default=None,
         description="Human-readable reason for denial, if applicable",
     )
+    payment_id: Optional[str] = None
+    payment_status: Optional[str] = None

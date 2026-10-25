@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import api_router
 from app.core.config import settings
+from app.services.payments import seed_approvers
 from app.services.session import session_manager
 
 # Configure logging
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
             "[SECURITY] SECRET_KEY is set to the default development value. "
             "Set a strong random key in your .env file before deploying to production."
         )
+    seed_approvers()
     session_manager.start_background_cleanup(interval_seconds=60)
     logger.info("Session cleanup task started (60s interval)")
     yield
@@ -57,6 +59,7 @@ if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_origin_regex=settings.BACKEND_CORS_ORIGIN_REGEX,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -77,6 +80,9 @@ def read_root():
         "endpoints": {
             "sessions": f"{settings.API_V1_STR}/sessions",
             "verify": f"{settings.API_V1_STR}/auth/verify",
+            "payments": f"{settings.API_V1_STR}/payments",
+            "approvers": f"{settings.API_V1_STR}/approvers",
+            "metrics": f"{settings.API_V1_STR}/metrics",
             "websocket": f"{settings.API_V1_STR}/ws/{{session_id}}",
             "health": f"{settings.API_V1_STR}/health",
         },

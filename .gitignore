@@ -42,3 +42,8 @@ sql_app.db
 .idea/
 .DS_Store
 Thumbs.db
+
+# SentinelSeal runtime data (SQLite, thumbnails, temp uploads)
+backend/data/
+.agents/
+graphify-out/
