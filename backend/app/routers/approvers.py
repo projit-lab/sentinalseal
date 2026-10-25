@@ -22,7 +22,10 @@ class EnrolRequest(BaseModel):
 
 @router.get("/approvers", summary="Designated approvers for this company")
 def list_approvers():
-    return [pay.public_approver(a) for a in store.list_approvers()]
+    order = {a["approver_id"]: i for i, a in enumerate(pay.DEFAULT_APPROVERS)}
+    items = sorted(store.list_approvers(),
+                   key=lambda a: (not a.get("enrolled"), order.get(a["approver_id"], 99)))
+    return [pay.public_approver(a) for a in items]
 
 
 @router.post("/enrol", summary="Enrol an approver's phone (stores its public key)")
