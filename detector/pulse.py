@@ -34,6 +34,10 @@ FREQ_MAX = MAX_BPM / 60.0     # 4.00 Hz
 
 # Screen flicker threshold from native-lib.cpp L228
 FLICKER_CORR_THRESHOLD = 0.98
+# Disabled for uploaded videos: on real phone recordings of a live face the green-red
+# correlation is ~0.99 (lighting and motion move all channels together), so this check
+# flagged genuine videos as "screen replay". Re-enable only after validating it on data.
+FLICKER_CHECK_ENABLED = False
 
 
 @dataclass
@@ -321,7 +325,7 @@ def analyze_pulse(
     if len(fh_rgb) >= 30:
         flicker_r = compute_pearson_corr(fh_rgb[:, 1], fh_rgb[:, 0])  # green vs red
         result.screen_flicker_corr = round(flicker_r, 4)
-        result.is_screen_flicker = flicker_r > FLICKER_CORR_THRESHOLD
+        result.is_screen_flicker = FLICKER_CHECK_ENABLED and flicker_r > FLICKER_CORR_THRESHOLD
 
     # Spectral analysis on forehead pulse (standard rPPG site)
     fh_pulse = region_pulses["forehead"]

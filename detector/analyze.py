@@ -100,6 +100,7 @@ def analyze(path: str) -> Dict:
         # If completely no face detected across all frames
         if face_batch.face_found_rate == 0.0:
             return make_verdict(
+                face_found_rate=0.0,
                 verdict=NEEDS_CALLBACK,
                 score=None,
                 reasons=[
@@ -134,6 +135,25 @@ def analyze(path: str) -> Dict:
         # ── 4. Deepfake Neural Classifiers ──────────────────────────────
         clf_res = classify_crops(valid_crops, valid_crop_indices)
 
+        details = dict(
+            bpm=pulse_res.bpm if pulse_res.valid else None,
+            pulse_snr=pulse_res.snr if pulse_res.valid else None,
+            region_correlation=pulse_res.mean_region_corr if pulse_res.valid else None,
+            face_found_rate=round(face_batch.face_found_rate, 3),
+        )
+
+        if not clf_res.models_used:
+            return make_verdict(
+                verdict=NEEDS_CALLBACK,
+                score=None,
+                reasons=[
+                    "Deepfake models are not loaded on this server, so the video was not checked for manipulation",
+                    "Held for out-of-band callback confirmation",
+                ],
+                processing_seconds=round(time.monotonic() - t0, 3),
+                **details,
+            )
+
         # ── 5. Feature Extraction ───────────────────────────────────────
         features = extract_features(frame_res, face_batch, pulse_res, clf_res)
 
@@ -158,6 +178,7 @@ def analyze(path: str) -> Dict:
             flagged_frames=features.flagged_frames,
             signed=False,
             processing_seconds=round(time.monotonic() - t0, 3),
+            **details,
         )
 
     except Exception:

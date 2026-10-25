@@ -95,9 +95,14 @@ class EfficientNetB4Detector:
             except Exception as e:
                 logger.warning(f"Could not download honi05 weights: {e}")
 
-            # Instantiate standard EfficientNet-B4
-            weights = models.EfficientNet_B4_Weights.DEFAULT
-            base_model = models.efficientnet_b4(weights=weights)
+            if not checkpoint_path or not os.path.exists(checkpoint_path):
+                # Without the fine-tuned checkpoint the final layer would be random,
+                # so the scores would be meaningless. Refuse instead of guessing.
+                logger.warning("EfficientNet-B4 not used: deepfake checkpoint unavailable")
+                return False
+
+            # Architecture only; all weights come from the checkpoint below
+            base_model = models.efficientnet_b4(weights=None)
 
             in_features = base_model.classifier[1].in_features
             # Head structure: Dropout + Linear
@@ -111,11 +116,23 @@ class EfficientNetB4Detector:
                 elif "state_dict" in state_dict:
                     state_dict = state_dict["state_dict"]
 
+                # Strip common wrapper prefixes, then require the weights to actually fit
+                for prefix in ("module.", "model.", "backbone.", "net."):
+                    if state_dict and all(k.startswith(prefix) for k in state_dict):
+                        state_dict = {k[len(prefix):]: v for k, v in state_dict.items()}
                 try:
-                    base_model.load_state_dict(state_dict, strict=False)
-                    logger.info("Loaded honi05/deepfake-detection weights")
+                    res = base_model.load_state_dict(state_dict, strict=False)
                 except Exception as e:
-                    logger.warning(f"Partial state dict match: {e}")
+                    logger.warning(f"EfficientNet-B4 not used: checkpoint does not fit ({e})")
+                    return False
+                expected = len(base_model.state_dict())
+                if any(k.startswith("classifier") for k in res.missing_keys) or len(res.missing_keys) > 0.05 * expected:
+                    logger.warning(
+                        "EfficientNet-B4 not used: checkpoint keys do not match "
+                        f"({len(res.missing_keys)} of {expected} weights missing, e.g. {res.missing_keys[:3]})")
+                    return False
+                logger.info("Loaded honi05/deepfake-detection weights (%d missing, %d unexpected)",
+                            len(res.missing_keys), len(res.unexpected_keys))
 
             base_model.eval()
             self.model = base_model
@@ -210,7 +227,6 @@ class SigLIPDetector:
                 scores.append(fake_prob)
             except Exception as e:
                 logger.debug(f"SigLIP inference error on frame: {e}")
-                scores.append(0.5)
 
         return scores
 

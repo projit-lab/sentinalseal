@@ -7,6 +7,7 @@ without needing any dataset downloads.
 
 from __future__ import annotations
 
+import numpy as np
 import os
 import tempfile
 try:

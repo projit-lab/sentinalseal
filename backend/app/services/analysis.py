@@ -114,7 +114,9 @@ def analyze_instruction(payment_id: str, video_path: str) -> None:
         verdict["signed"] = False
         if verdict.get("verdict") not in ("NEEDS_CALLBACK", "SUSPICIOUS"):
             verdict["verdict"] = "NEEDS_CALLBACK"
-        reasons = list(verdict.get("reasons") or [])
+        # Never show server paths in reasons
+        reasons = [str(r).replace(str(video), "the uploaded video").replace(str(video.parent), "")
+                   for r in (verdict.get("reasons") or [])]
         if not any("enrolled approver" in r for r in reasons):
             reasons.append("Not sealed by any enrolled approver")
         verdict["reasons"] = reasons
