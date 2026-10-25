@@ -40,7 +40,9 @@ data class VerifyResponse(
     val status: String,
     @SerialName("session_id")
     val sessionId: String,
-    val reason: String? = null
+    val reason: String? = null,
+    @SerialName("payment_id") val paymentId: String? = null,
+    @SerialName("payment_status") val paymentStatus: String? = null
 )
 
 /**
@@ -55,4 +57,50 @@ data class SessionResponse(
     val createdAt: String = "",
     @SerialName("expires_at")
     val expiresAt: String = ""
+)
+
+
+/**
+ * SentinelSeal: what the approver's phone signs. The liveness fields from SentinelHard
+ * plus the exact payment being approved. Matches the backend SealPayload schema.
+ */
+@Serializable
+data class SealPayload(
+    @SerialName("session_id") val sessionId: String,
+    @SerialName("payment_id") val paymentId: String,
+    @SerialName("approver_id") val approverId: String,
+    val payee: String,
+    @SerialName("amount_inr") val amountInr: Double,
+    val bpm: Double,
+    val timestamp: String,            // ISO-8601 UTC
+    @SerialName("device_id") val deviceId: String,
+    val snr: Double,
+    val variance: Double
+)
+
+/** The payment the approver is asked to seal (GET /payments/{id}). */
+@Serializable
+data class PaymentInfo(
+    @SerialName("payment_id") val paymentId: String,
+    @SerialName("payee_name") val payeeName: String,
+    @SerialName("payee_account_masked") val payeeAccountMasked: String = "",
+    @SerialName("amount_inr") val amountInr: Double,
+    @SerialName("approver_id") val approverId: String,
+    @SerialName("approver_name") val approverName: String = "",
+    @SerialName("session_id") val sessionId: String,
+    val status: String = ""
+)
+
+@Serializable
+data class EnrolRequest(
+    @SerialName("approver_id") val approverId: String,
+    @SerialName("public_key") val publicKey: String,
+    @SerialName("attestation_chain") val attestationChain: List<String> = emptyList()
+)
+
+@Serializable
+data class EnrolResponse(
+    @SerialName("approver_id") val approverId: String,
+    val name: String = "",
+    @SerialName("enrolled_at") val enrolledAt: String = ""
 )

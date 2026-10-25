@@ -1,5 +1,8 @@
 package com.example.sentinelhard.network
 
+import com.example.sentinelhard.models.EnrolRequest
+import com.example.sentinelhard.models.EnrolResponse
+import com.example.sentinelhard.models.PaymentInfo
 import com.example.sentinelhard.models.SessionResponse
 import com.example.sentinelhard.models.VerifyRequest
 import com.example.sentinelhard.models.VerifyResponse
@@ -22,4 +25,12 @@ interface BiometricApiService {
      */
     @GET("sessions/{session_id}")
     suspend fun getSessionStatus(@Path("session_id") sessionId: String): Response<SessionResponse>
+
+    /** SentinelSeal: the payment to show on the confirm screen before sealing. */
+    @GET("payments/{payment_id}")
+    suspend fun getPayment(@Path("payment_id") paymentId: String): Response<PaymentInfo>
+
+    /** SentinelSeal: register this phone's StrongBox public key for an approver. */
+    @POST("enrol")
+    suspend fun enrol(@Body request: EnrolRequest): Response<EnrolResponse>
 }
