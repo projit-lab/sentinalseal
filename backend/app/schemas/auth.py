@@ -33,7 +33,7 @@ class SealPayload(BaseModel):
     approver_id: str
     payee: str
     amount_inr: float = Field(..., gt=0)
-    bpm: int = Field(..., ge=0)
+    bpm: float = Field(..., ge=0)
     timestamp: datetime
     device_id: str
     snr: Optional[float] = Field(default=5.0)

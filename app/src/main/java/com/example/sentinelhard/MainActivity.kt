@@ -44,7 +44,9 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.face.FaceLandmark
 import org.opencv.android.OpenCVLoader
 import com.example.sentinelhard.camera.QrCodeAnalyzer
-import com.example.sentinelhard.models.BiometricPayload
+import com.example.sentinelhard.models.EnrolRequest
+import com.example.sentinelhard.models.PaymentInfo
+import com.example.sentinelhard.models.SealPayload
 import com.example.sentinelhard.models.VerifyRequest
 import com.example.sentinelhard.network.ApiClient
 import androidx.lifecycle.lifecycleScope
@@ -57,10 +59,15 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
 
+/** The approver this phone belongs to (demo: the MD). Change for another approver. */
+const val APPROVER_ID = "md-rakesh"
+
 sealed class AuthState {
     object SelectionMenu : AuthState()
     object ScanQr : AuthState()
-    data class MeasureBiometrics(val sessionId: String) : AuthState()
+    object LoadingPayment : AuthState()
+    data class ConfirmPayment(val payment: PaymentInfo) : AuthState()
+    data class MeasureBiometrics(val payment: PaymentInfo) : AuthState()
     object LivenessVerified : AuthState()
     object Submitting : AuthState()
     data class Success(val message: String) : AuthState()
@@ -171,10 +178,7 @@ class MainActivity : AppCompatActivity() {
                         when (val state = currentAuthState) {
                             is AuthState.SelectionMenu -> {
                                 SelectionMenuUI(
-                                    onPhoneLogin = {
-                                        val localSessionId = "phone_session_${System.currentTimeMillis()}"
-                                        authState.value = AuthState.MeasureBiometrics(localSessionId)
-                                    },
+                                    onPhoneLogin = { enrolThisPhone() },
                                     onDesktopLogin = {
                                         authState.value = AuthState.ScanQr
                                     }
@@ -187,6 +191,20 @@ class MainActivity : AppCompatActivity() {
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.align(Alignment.TopCenter).padding(top = 32.dp)
+                                )
+                            }
+                            is AuthState.LoadingPayment -> {
+                                StatusOverlayUI(
+                                    message = "Loading payment...",
+                                    color = Color.Yellow,
+                                    showProgress = true
+                                )
+                            }
+                            is AuthState.ConfirmPayment -> {
+                                ConfirmPaymentUI(
+                                    payment = state.payment,
+                                    onApprove = { authState.value = AuthState.MeasureBiometrics(state.payment) },
+                                    onDecline = { authState.value = AuthState.Error("Not approved. The payment stays on hold.") }
                                 )
                             }
                             is AuthState.MeasureBiometrics -> {
@@ -321,10 +339,15 @@ class MainActivity : AppCompatActivity() {
 
         qrAnalysis.setAnalyzer(cameraExecutor, QrCodeAnalyzer { rawQrString ->
             Log.i("SentinelHard", "QR Scanned: $rawQrString")
-            val sessionId = parseSessionId(rawQrString)
-            
+            val paymentId = parsePaymentId(rawQrString)
+
             runOnUiThread {
-                authState.value = AuthState.MeasureBiometrics(sessionId)
+                if (paymentId == null) {
+                    authState.value = AuthState.Error("Not a SentinelSeal payment QR code")
+                } else {
+                    authState.value = AuthState.LoadingPayment
+                    loadPayment(paymentId)
+                }
             }
 
             // Transition: unbind QR, bind rPPG pipeline
@@ -393,30 +416,104 @@ class MainActivity : AppCompatActivity() {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
+            Text(
+                text = "SentinelSeal approver: $APPROVER_ID",
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
             Button(
-                onClick = onPhoneLogin,
+                onClick = onDesktopLogin,
                 modifier = Modifier
                     .width(250.dp)
                     .padding(bottom = 16.dp)
             ) {
-                Text("Login Directly on Phone")
+                Text("Scan payment QR code")
             }
 
             Button(
-                onClick = onDesktopLogin,
+                onClick = onPhoneLogin,
                 modifier = Modifier.width(250.dp)
             ) {
-                Text("Scan Desktop QR Code")
+                Text("Enrol this phone")
             }
         }
     }
 
-    private fun parseSessionId(rawString: String): String {
-        return try {
-            val json = JSONObject(rawString)
-            json.optString("session_id", rawString)
-        } catch (e: Exception) {
-            rawString
+    /** QR from the bank screen: "sentinelseal:<payment_id>:<session_id>". */
+    private fun parsePaymentId(rawString: String): String? {
+        val parts = rawString.trim().split(":")
+        return if (parts.size >= 3 && parts[0] == "sentinelseal" && parts[1].isNotBlank()) parts[1] else null
+    }
+
+    /** Fetch the payment so the approver sees exactly what he is sealing. */
+    private fun loadPayment(paymentId: String) {
+        lifecycleScope.launch {
+            try {
+                val response = ApiClient.apiService.getPayment(paymentId)
+                val payment = response.body()
+                authState.value = when {
+                    !response.isSuccessful || payment == null -> AuthState.Error("Payment not found")
+                    payment.approverId != APPROVER_ID -> AuthState.Error("This payment needs ${payment.approverName}'s approval, not this phone's")
+                    payment.status != "AWAITING_APPROVAL" && payment.status != "HELD_CALLBACK" && payment.status != "HELD_SUSPICIOUS" ->
+                        AuthState.Error("Payment is already ${payment.status.lowercase().replace('_', ' ')}")
+                    else -> AuthState.ConfirmPayment(payment)
+                }
+            } catch (e: Exception) {
+                Log.e("SentinelSeal", "Payment load error", e)
+                authState.value = AuthState.Error(e.message ?: "Network Error")
+            }
+        }
+    }
+
+    /** Register this phone's StrongBox public key for APPROVER_ID (done once). */
+    private fun enrolThisPhone() {
+        authState.value = AuthState.Submitting
+        lifecycleScope.launch {
+            try {
+                if (!cryptoManager.hasKey()) {
+                    cryptoManager.generateHardwareKey()
+                }
+                val response = ApiClient.apiService.enrol(
+                    EnrolRequest(
+                        approverId = APPROVER_ID,
+                        publicKey = cryptoManager.getBase64PublicKey(),
+                        attestationChain = cryptoManager.getAttestationChain()
+                    )
+                )
+                authState.value = if (response.isSuccessful) {
+                    AuthState.Success("Enrolled as ${response.body()?.name ?: APPROVER_ID}")
+                } else {
+                    AuthState.Error("Enrolment failed (${response.code()})")
+                }
+            } catch (e: Exception) {
+                Log.e("SentinelSeal", "Enrol error", e)
+                authState.value = AuthState.Error(e.message ?: "Network Error")
+            }
+        }
+    }
+
+    @Composable
+    fun ConfirmPaymentUI(payment: PaymentInfo, onApprove: () -> Unit, onDecline: () -> Unit) {
+        val amount = "\u20B9" + java.text.NumberFormat.getNumberInstance(Locale("en", "IN")).format(payment.amountInr.toLong())
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xE6000000))
+                .padding(24.dp)
+        ) {
+            Text("Approve this payment?", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(amount, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp))
+            Text("to ${payment.payeeName} (A/c ${payment.payeeAccountMasked})", color = Color.White, fontSize = 16.sp, modifier = Modifier.padding(top = 8.dp))
+            Text("Payment ${payment.paymentId}", color = Color.Gray, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp, bottom = 24.dp))
+            Text("Only approve if you asked for this payment yourself.", color = Color(0xFFFFCC66), fontSize = 14.sp, modifier = Modifier.padding(bottom = 24.dp))
+            Button(onClick = onApprove, modifier = Modifier.width(250.dp).padding(bottom = 12.dp)) {
+                Text("Approve and seal")
+            }
+            Button(onClick = onDecline, modifier = Modifier.width(250.dp)) {
+                Text("I did not ask for this")
+            }
         }
     }
 
@@ -667,19 +764,19 @@ class MainActivity : AppCompatActivity() {
             val state = authState.value
             if (state is AuthState.MeasureBiometrics && !hasFaceLost) {
                 if (displayedStatus == 2 && metrics[3] >= 150.0) {
-                    val sessionId = state.sessionId
+                    val payment = state.payment
                     authState.value = AuthState.LivenessVerified
-                    
+
                     lifecycleScope.launch {
                         delay(1200) // Visual handshake delay
-                        submitAuthentication(sessionId)
+                        submitAuthentication(payment)
                     }
                 }
             }
         }
     }
 
-    private fun submitAuthentication(sessionId: String) {
+    private fun submitAuthentication(payment: PaymentInfo) {
         authState.value = AuthState.Submitting
         
         lifecycleScope.launch {
@@ -695,8 +792,12 @@ class MainActivity : AppCompatActivity() {
                 val varianceY = calculateVariance(nosePositions.map { it.y })
                 val totalVariance = (varianceX + varianceY).toDouble()
 
-                val payloadObj = BiometricPayload(
-                    sessionId = sessionId,
+                val payloadObj = SealPayload(
+                    sessionId = payment.sessionId,
+                    paymentId = payment.paymentId,
+                    approverId = APPROVER_ID,
+                    payee = payment.payeeName,
+                    amountInr = payment.amountInr,
                     bpm = bpmState.value,
                     timestamp = timestamp,
                     deviceId = deviceId,
@@ -726,9 +827,9 @@ class MainActivity : AppCompatActivity() {
                 val response = ApiClient.apiService.verifyBiometrics(verifyRequest)
                 
                 if (response.isSuccessful && response.body()?.status == "ACCESS_GRANTED") {
-                    authState.value = AuthState.Success("Authenticated Successfully")
+                    authState.value = AuthState.Success("Sealed. The bank can now release this payment.")
                 } else {
-                    val errorMsg = response.body()?.reason ?: "Verification Failed"
+                    val errorMsg = response.body()?.reason ?: "Seal refused (${response.code()})"
                     authState.value = AuthState.Error(errorMsg)
                 }
             } catch (e: Exception) {

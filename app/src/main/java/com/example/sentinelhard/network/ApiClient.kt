@@ -13,9 +13,10 @@ import java.util.concurrent.TimeUnit
  * Uses kotlinx.serialization for JSON conversion to match @Serializable data classes.
  */
 object ApiClient {
-    // Android emulator loopback to host machine.
-    // Replace with your machine's local IP for physical device testing.
-    private const val BASE_URL = "http://10.0.2.2:8080/api/v1/"
+    // SentinelSeal backend: uvicorn on the laptop, port 8000.
+    // Physical phone: set this to the laptop's IP on the venue Wi-Fi (ipconfig on Windows).
+    // Emulator: use "http://10.0.2.2:8000/api/v1/".
+    private const val BASE_URL = "http://192.168.1.105:8000/api/v1/"
 
     // Lenient JSON parser: ignores unknown fields from server, encodes defaults
     private val json = Json {
