@@ -5,21 +5,22 @@ import { formatDuration, formatDurationWords, formatINR, formatTime, pct, second
 
 // ── Status ───────────────────────────────────────────────────────────
 export const STATUS = {
-  NOT_REQUIRED: { label: 'No check needed', tone: 'neutral', icon: '–' },
-  AWAITING_APPROVAL: { label: 'Awaiting seal', tone: 'neutral', icon: '…' },
-  ANALYZING: { label: 'Checking video', tone: 'busy', icon: '◌' },
-  VERIFIED: { label: 'Verified', tone: 'good', icon: '✓' },
-  HELD_CALLBACK: { label: 'Needs callback', tone: 'warn', icon: '!' },
-  HELD_SUSPICIOUS: { label: 'Suspicious', tone: 'bad', icon: '✕' },
-  RELEASED: { label: 'Released', tone: 'done', icon: '✓' },
-  REJECTED: { label: 'Rejected', tone: 'done', icon: '✕' },
+  NOT_REQUIRED: { label: 'No check needed', tone: 'neutral' },
+  AWAITING_APPROVAL: { label: 'Awaiting seal', tone: 'neutral' },
+  ANALYZING: { label: 'Checking video', tone: 'busy' },
+  VERIFIED: { label: 'Verified', tone: 'good' },
+  HELD_CALLBACK: { label: 'Needs callback', tone: 'warn' },
+  HELD_SUSPICIOUS: { label: 'Suspicious', tone: 'bad' },
+  RELEASED: { label: 'Released', tone: 'done' },
+  REJECTED: { label: 'Rejected', tone: 'done' },
 };
 
 export function StatusBadge({ status }) {
-  const s = STATUS[status] || { label: status || '—', tone: 'neutral', icon: '' };
+  const s = STATUS[status] || { label: status || '—', tone: 'neutral' };
   return (
     <span className={`badge badge-${s.tone}`}>
-      <span aria-hidden="true" className={s.tone === 'busy' ? 'spin' : ''}>{s.icon}</span> {s.label}
+      <span aria-hidden="true" className="badge-dot" />
+      {s.label}
     </span>
   );
 }
@@ -96,7 +97,7 @@ export function HoldTimer({ payment }) {
       : payment.status === 'VERIFIED' ? 'sealed by approver' : 'rejected';
     return (
       <span className="mono">
-        Held at {formatTime(payment.held_at)} → {formatTime(payment.resolved_at)} · {formatDurationWords(payment.resolution_seconds)} · {how}
+        Held {formatTime(payment.held_at)} to {formatTime(payment.resolved_at)} · {formatDurationWords(payment.resolution_seconds)} · {how}
       </span>
     );
   }
@@ -148,7 +149,7 @@ export function PaymentTable({ rows, selected, onSelect, showHeld }) {
               <td>{p.payee_name}<div className="quiet small">{p.payment_id}</div></td>
               <td className="num">{formatINR(p.amount_inr)}</td>
               <td className="mono">{showHeld ? <HoldTimer payment={p} /> : formatTime(p.created_at)}</td>
-              <td className="small">{p.first_reason || ''}</td>
+              <td className="small" title={p.first_reason || ''}>{p.first_reason || ''}</td>
             </tr>
           ))}
         </tbody>

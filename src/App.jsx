@@ -35,7 +35,13 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="seal" aria-hidden="true">◆</span> SentinelSeal
+          <svg className="mark" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M9.2 12.2l1.9 1.9 3.8-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="wordmark">SentinelSeal</span>
+          <span className="brand-sub">Payment approval verification</span>
         </div>
         <nav aria-label="Screens">
           {SCREENS.map((s) => (
@@ -45,11 +51,11 @@ export default function App() {
           ))}
         </nav>
         <div className={`server ${health.data ? 'ok' : 'down'}`} title={health.data ? 'Server reachable' : "Can't reach the server"}>
-          <span className="dot" /> {health.data ? 'Server' : 'Offline'}
+          <span className="dot" /> {health.data ? 'Connected' : 'Offline'}
         </div>
       </header>
       {current.mock && (
-        <div className="mock-label">Mock bank: stands in for the bank's existing corporate net banking. SentinelSeal plugs in behind it.</div>
+        <div className="mock-label"><span className="mock-tag">Demo bank</span> These two screens stand in for the bank's existing corporate net banking. SentinelSeal runs behind them.</div>
       )}
       <main>
         {screen === 'maker' && (

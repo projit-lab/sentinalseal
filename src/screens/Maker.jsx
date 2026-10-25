@@ -103,7 +103,7 @@ export default function Maker({ openInChecker }) {
         {!p && (
           <section className="card empty">
             <p>Create a payment to see whether it needs a check.</p>
-            <p className="quiet small">Rule: new payee and ₹5,00,000 or more → sealed approval or instruction check.</p>
+            <p className="quiet small">Rule: a new payee at ₹5,00,000 or more needs a sealed approval or an instruction check.</p>
           </section>
         )}
         {p && (
@@ -150,7 +150,7 @@ export default function Maker({ openInChecker }) {
             {p.status !== 'AWAITING_APPROVAL' && p.check_required && (
               <p className="quiet">Status: {p.status.replace('_', ' ').toLowerCase()}.</p>
             )}
-            <button type="button" className="link" onClick={() => openInChecker(p.payment_id)}>Open in Payments to release →</button>
+            <button type="button" className="link" onClick={() => openInChecker(p.payment_id)}>Open in Payments to release</button>
 
             <details className="demo">
               <summary>Demo tools (DEMO ONLY)</summary>
