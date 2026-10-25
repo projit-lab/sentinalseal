@@ -20,3 +20,13 @@
 - `eval/run_all.py`: benchmark suite runner (Suites 1–4, 9, 10) reproducing all metrics with `--seed 42`
 - `results/metrics.json`: contract-compliant benchmark results for React Accuracy view
 - `results/REPORT.md`: comprehensive evaluation report with ablation, robustness, latency, and limitation disclosures
+
+## Part B (backend, web, approver app)
+
+- `backend/app/services/seal.py`: /auth/verify checks only the enrolled approver key; payee, amount, payment and single-use session must match
+- `backend/app/routers/payments.py`: payment lifecycle, instruction upload → `analyze()`, hold, callback, release, reject, report
+- `backend/app/services/analysis.py`: raw video deleted after analysis; SHA-256 + flagged-frame thumbnails kept
+- `backend/app/routers/metrics.py`: serves only results marked as measured
+- `backend/tests/`: 20 tests (seal attacks, bad inputs, end-to-end)
+- `src/`: web screens (New payment, Payments to release, Fraud-ops, Accuracy)
+- `app/`: approver app scans the payment QR, shows payee and amount, seals the exact payment; phone enrolment
