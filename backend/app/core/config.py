@@ -11,9 +11,15 @@ class Settings(BaseSettings):
     )
 
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "IOB Backend"
+    PROJECT_NAME: str = "SentinelSeal Backend"
 
     # CORS Origins (accepts JSON list or comma-separated string)
+    # Demo-only endpoints (/demo/replay). Set DEMO_TOOLS=false to turn off.
+    DEMO_TOOLS: bool = True
+
+    # Browser origins on the venue LAN (laptop IP changes): any localhost / private-network port.
+    BACKEND_CORS_ORIGIN_REGEX: str = r"^https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$"
+
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:5173",
