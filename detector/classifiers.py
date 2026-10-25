@@ -101,12 +101,19 @@ class EfficientNetB4Detector:
                 logger.warning("EfficientNet-B4 not used: deepfake checkpoint unavailable")
                 return False
 
-            # Architecture only; all weights come from the checkpoint below
+            # Architecture only; all weights come from the checkpoint below.
+            # Head copied from the checkpoint author's code (Honi05/DeepFakeDetector,
+            # src/model.py, DeepfakeClassifier): Dropout-Linear(1792,256)-ReLU-Dropout-Linear(256,1),
+            # raw logit -> sigmoid at inference.
             base_model = models.efficientnet_b4(weights=None)
-
-            in_features = base_model.classifier[1].in_features
-            # Head structure: Dropout + Linear
-            base_model.classifier[1] = nn.Linear(in_features, 1)
+            in_features = base_model.classifier[1].in_features  # 1792
+            base_model.classifier = nn.Sequential(
+                nn.Dropout(p=0.4),
+                nn.Linear(in_features, 256),
+                nn.ReLU(),
+                nn.Dropout(p=0.2),
+                nn.Linear(256, 1),
+            )
 
             if checkpoint_path and os.path.exists(checkpoint_path):
                 state_dict = torch.load(checkpoint_path, map_location="cpu")

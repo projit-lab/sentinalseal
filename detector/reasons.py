@@ -95,13 +95,10 @@ def generate_reasons(
         reasons.append(
             f"Screen replay detected: optical flicker between color channels (r={features.pulse_screen_flicker_corr:.2f})"
         )
-    elif features.face_found_rate >= 0.5:
-        if features.pulse_mean_region_corr < 0.25:
-            reasons.append("No consistent pulse between forehead and cheeks (cross-region correlation failed)")
-        elif features.pulse_snr < 2.0:
-            reasons.append(f"Sub-threshold biological pulse signal (SNR {features.pulse_snr:.1f} < 2.0)")
-        elif features.pulse_bpm_plausible > 0.5 and features.pulse_mean_region_corr > 0.7:
-            reasons.append(f"Physiological skin pulse confirmed ({features.pulse_bpm:.0f} BPM, coherent across regions)")
+    # Pulse-based reasons are not shown to users yet: on genuine phone videos the
+    # forehead/cheek agreement measured 0.00-0.35, so "no consistent pulse" accused real
+    # people. The pulse values stay visible to fraud ops; reasons return once
+    # eval/evaluate.py shows the pulse features separate real from fake.
 
     # 6. Fallback if clean but unsigned
     if len(reasons) == 1 and not signed:

@@ -28,7 +28,7 @@ def test_generate_reasons_unsupported_or_error():
 
 
 def test_generate_reasons_deepfake_evidence():
-    """Reasons should mention flagged frames and lack of pulse."""
+    """Reasons mention flagged frames; unvalidated pulse findings are not shown to users."""
     vf = VideoFeatures(
         face_found_rate=0.90,
         effnet_max=0.92,
@@ -40,7 +40,7 @@ def test_generate_reasons_deepfake_evidence():
     reasons = generate_reasons(vf, signed=False)
 
     assert any("41–43, 88" in r for r in reasons)
-    assert any("pulse" in r.lower() for r in reasons)
+    assert not any("pulse" in r.lower() for r in reasons)
     assert any("Not signed by any enrolled approver" in r for r in reasons)
 
 
